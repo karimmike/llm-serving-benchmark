@@ -1,0 +1,42 @@
+# Experiment configuration for llm-serving-benchmark.
+# Target hardware: one Kaggle T4 (16 GB, compute capability 7.5).
+# T4 has no bfloat16 and no FlashAttention support -> float16 everywhere.
+
+models:
+  qwen-fp16:
+    hf_id: Qwen/Qwen2.5-1.5B-Instruct
+    dtype: float16
+    quantization: null
+  qwen-awq:
+    hf_id: Qwen/Qwen2.5-1.5B-Instruct-AWQ  # official 4-bit AWQ from Qwen
+    dtype: float16
+    quantization: awq  # awq_marlin needs compute capability >= 8.0, so plain awq on T4
+
+server:  # vLLM OpenAI-compatible server
+  host: 127.0.0.1
+  port: 8000
+  max_model_len: 4096  # long prompt (~2k) + output fits comfortably
+  gpu_memory_utilization: 0.90
+
+workloads:
+  short:
+    prompt_tokens: 100
+    max_tokens: 128
+  long:
+    prompt_tokens: 2000
+    max_tokens: 128
+
+sweep:  # vLLM runs
+  concurrency: [1, 4, 16, 64]
+  requests_per_level: 128
+  warmup_requests: 8
+  ignore_eos: true  # fixed output length so engines are compared like-for-like
+  seed: 0
+
+hf_baseline:  # plain generate(), one request at a time (concurrency 1 by definition)
+  requests: 32
+  warmup_requests: 2
+
+# ASSUMPTION: Kaggle is free. This is an on-demand cloud price for one T4,
+# used only to turn throughput into a comparable cost per 1M output tokens.
+gpu_price_per_hour_usd: 0.35

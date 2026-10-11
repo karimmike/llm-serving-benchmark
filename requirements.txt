@@ -1,0 +1,5 @@
+# Local environment: load-generator client, analysis/plots, tests. No GPU needed.
+openai>=1.99.1,<2.25  # same range vLLM 0.18.0 accepts
+pyyaml>=6.0
+matplotlib>=3.8
+pytest>=8.0
